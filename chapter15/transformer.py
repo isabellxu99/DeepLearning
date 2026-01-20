@@ -34,7 +34,7 @@ class FeedForwardBlock(nn.Module):
         # (batch, seq_len, d_model) --> (batch, seq_len, d_ff) --> (batch, seq_len, d_model)
         return self.linear_2(self.dropout(torch.relu(self.linear_1(x))))
 
-
+#将 token id → d_model 维的向量
 class InputEmbeddings(nn.Module):
 
     def __init__(self, d_model: int, vocab_size: int) -> None:
@@ -46,7 +46,9 @@ class InputEmbeddings(nn.Module):
     def forward(self, x):
         # (batch, seq_len) --> (batch, seq_len, d_model)
         return self.embedding(x) * math.sqrt(self.d_model)
+#为什么 Transformer 要乘以 √512？乘 √d_model 只是把向量数值放大，不改变向量维度。
 
+#因为：embedding 初始化时数值很小，positional encoding（位置编码）范围是 [-1,1]，如果 embedding 不放大，会被位置编码“淹没”，模型训练变困难。乘以 √512 后 embedding 和 pos encoding 的数值范围一致，训练会更稳定。
 
 class PositionalEncoding(nn.Module):
 
