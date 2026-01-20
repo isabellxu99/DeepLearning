@@ -2,33 +2,33 @@ import torch
 import torch.nn as nn
 import math
 
-
+#对hidden_size 维度归一化
 class LayerNormalization(nn.Module):
 
     def __init__(self, features: int, eps: float = 10 ** -6) -> None:
         super().__init__()
         self.eps = eps
         # 可学习权重
-        self.alpha = nn.Parameter(torch.ones(features))
+        self.alpha = nn.Parameter(torch.ones(features))  #feature就是hidden_size
         # 可学习偏差
         self.bias = nn.Parameter(torch.zeros(features))
 
     def forward(self, x):
         # x: (batch, seq_len, hidden_size)
         # 保留维度来进行广播
-        mean = x.mean(dim=-1, keepdim=True)  # (batch, seq_len, 1)
+        mean = x.mean(dim=-1, keepdim=True)  # (batch, seq_len, 1)， dim=-1是因为最后一维是 hidden_size
         std = x.std(dim=-1, keepdim=True)  # (batch, seq_len, 1)
         # eps 是为了防止除0设置的很小的值
         return self.alpha * (x - mean) / (std + self.eps) + self.bias
 
-
+#全连接部分
 class FeedForwardBlock(nn.Module):
 
     def __init__(self, d_model: int, d_ff: int, dropout: float) -> None:
         super().__init__()
-        self.linear_1 = nn.Linear(d_model, d_ff)
-        self.dropout = nn.Dropout(dropout)
-        self.linear_2 = nn.Linear(d_ff, d_model)
+        self.linear_1 = nn.Linear(d_model, d_ff)  #第一层线性变化把512输入embedding维度变为2048输出，增加模型的非线性表达能力，更能学复杂模式。
+        self.dropout = nn.Dropout(dropout)   #防止过拟合
+        self.linear_2 = nn.Linear(d_ff, d_model)   #把 2048 维再压回 512 维
 
     def forward(self, x):
         # (batch, seq_len, d_model) --> (batch, seq_len, d_ff) --> (batch, seq_len, d_model)
